@@ -89,8 +89,6 @@ export const ZipUploadModal: React.FC<ZipUploadModalProps> = ({ isOpen, onClose,
           zipIdx++;
         }
       }
-      
-      // If we still have zips left and no empty slots, overwrite from start (optional, simplified to just fill empty)
       return newFiles;
     });
   }, []);
@@ -176,9 +174,9 @@ export const ZipUploadModal: React.FC<ZipUploadModalProps> = ({ isOpen, onClose,
         {/* Header */}
         <div className="px-8 py-6 border-b border-gray-800 flex justify-between items-center bg-gray-800/50 shrink-0">
           <div>
-            <h2 className="text-2xl font-bold text-gray-100">Setup Multi-View Project</h2>
+            <h2 className="text-2xl font-bold text-gray-100">New Project Setup</h2>
             <p className="text-sm text-gray-400 mt-1">
-              Upload up to 5 ZIP packages. 
+              Start a fresh project by adding up to 5 ZIP packages. 
               <button 
                 onClick={() => fileInputRef.current?.click()} 
                 className="text-blue-400 hover:text-blue-300 ml-1 underline underline-offset-2 focus:outline-none"
@@ -233,7 +231,7 @@ export const ZipUploadModal: React.FC<ZipUploadModalProps> = ({ isOpen, onClose,
             className="px-6"
             icon={isProcessing ? <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> : null}
           >
-            {isProcessing ? 'Unzipping...' : `Compare ${activeCount} Package${activeCount !== 1 ? 's' : ''}`}
+            {isProcessing ? 'Unzipping...' : `Start Project (${activeCount} View${activeCount !== 1 ? 's' : ''})`}
           </Button>
         </div>
       </div>
