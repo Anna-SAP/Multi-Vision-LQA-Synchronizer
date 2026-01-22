@@ -31,6 +31,9 @@ const App: React.FC = () => {
   
   // Selection state per view index
   const [selectedPaths, setSelectedPaths] = useState<(string | null)[]>([null, null]);
+  
+  // Sidebar State
+  const [isSidebarPinned, setSidebarPinned] = useState(true);
 
   // Hidden input for "Add Report" functionality
   const appendInputRef = useRef<HTMLInputElement>(null);
@@ -42,6 +45,13 @@ const App: React.FC = () => {
   useEffect(() => {
     paneRefs.current = paneRefs.current.slice(0, views.length);
   }, [views]);
+
+  // Auto-collapse sidebar when views > 2 to save space
+  useEffect(() => {
+    if (views.length > 2) {
+      setSidebarPinned(false);
+    }
+  }, [views.length]);
 
   // Sync Scroll Hook
   useSyncScroll(
@@ -88,6 +98,9 @@ const App: React.FC = () => {
     });
     
     setPendingZipFiles([]);
+    
+    // Reset sidebar to pinned for fresh projects unless it's huge
+    setSidebarPinned(newViewCount <= 2);
   };
 
   const handleAppendZip = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,9 +132,6 @@ const App: React.FC = () => {
             isActive: true, // Ensure project is active even if it wasn't
             packages: [...prev.packages, newPkg]
         }));
-        
-        // 4. (Optional) Auto-select the first HTML file in the new package if available
-        // We defer this slightly to allow state to settle, or just let user click sidebar
         
     } catch (err) {
         alert("Failed to parse ZIP file.");
@@ -196,6 +206,9 @@ const App: React.FC = () => {
 
   const allEmpty = views.every(v => v.type === ContentType.EMPTY);
   const canAddMore = views.length < 5;
+  
+  // Logic to determine if we should use the collapsed "slim" Add button
+  const isCompactAddMode = views.length >= 3;
 
   return (
     <div 
@@ -305,6 +318,8 @@ const App: React.FC = () => {
             packages={project.packages}
             selectedPaths={selectedPaths}
             onSelect={handleSidebarSelect}
+            isPinned={isSidebarPinned}
+            onTogglePin={() => setSidebarPinned(!isSidebarPinned)}
           />
         )}
 
@@ -328,18 +343,53 @@ const App: React.FC = () => {
             </React.Fragment>
           ))}
 
-          {/* Add View Placeholder (Visual Feedback) */}
+          {/* Smart Add View Placeholder */}
           {canAddMore && (
-             <div className="flex shrink-0 min-w-[200px] max-w-[300px] flex-col relative border-l border-gray-800 bg-gray-900/50">
+             <div 
+                className={`
+                    flex shrink-0 flex-col relative border-l border-gray-800 bg-gray-900/50 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
+                    ${isCompactAddMode ? 'w-12 hover:w-24' : 'min-w-[200px] max-w-[300px]'}
+                `}
+             >
                  <button 
                     onClick={() => appendInputRef.current?.click()}
-                    className="flex-1 m-4 border-2 border-dashed border-gray-700 hover:border-blue-500 hover:bg-blue-900/10 rounded-xl flex flex-col items-center justify-center group transition-all text-gray-500 hover:text-blue-400"
+                    className={`
+                        flex-1 flex flex-col items-center justify-center group transition-all w-full
+                        ${isCompactAddMode 
+                            ? 'hover:bg-gray-800/80 text-gray-500 hover:text-blue-400' 
+                            : 'p-4'
+                        }
+                    `}
                     title="Add another report view"
                  >
-                     <div className="w-12 h-12 rounded-full bg-gray-800 group-hover:bg-blue-900/50 flex items-center justify-center mb-3 transition-colors">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                     {/* Card Content Wrapper */}
+                     <div className={`
+                        flex flex-col items-center justify-center w-full h-full transition-all
+                        ${isCompactAddMode 
+                            ? '' 
+                            : 'border-2 border-dashed border-gray-700 group-hover:border-blue-500 group-hover:bg-blue-900/10 rounded-xl'
+                        }
+                     `}>
+                         <div className={`
+                            flex items-center justify-center transition-all duration-300
+                            ${isCompactAddMode 
+                                ? 'w-8 h-8 rounded-full bg-gray-800 group-hover:bg-blue-600 group-hover:text-white group-hover:scale-110 shadow-lg'
+                                : 'w-12 h-12 rounded-full bg-gray-800 group-hover:bg-blue-900/50 mb-3'
+                            }
+                         `}>
+                            <svg className={`${isCompactAddMode ? 'w-5 h-5' : 'w-6 h-6'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                         </div>
+                         
+                         <span className={`
+                            font-medium transition-all duration-300 overflow-hidden whitespace-nowrap
+                            ${isCompactAddMode 
+                                ? 'h-0 opacity-0 group-hover:h-auto group-hover:opacity-100 group-hover:mt-2 text-[10px]' 
+                                : 'text-sm'
+                            }
+                         `}>
+                            {isCompactAddMode ? 'Add' : 'Add View'}
+                         </span>
                      </div>
-                     <span className="text-sm font-medium">Add View</span>
                  </button>
              </div>
           )}
@@ -351,7 +401,7 @@ const App: React.FC = () => {
 
       {/* Footer Info */}
       <footer className="h-6 bg-gray-800 border-t border-gray-700 flex items-center px-4 text-[10px] text-gray-500 justify-between shrink-0 z-20">
-         <div>Multi-Vision LQA Tool v2.1</div>
+         <div>Multi-Vision LQA Tool v2.2</div>
          <div className="flex gap-4">
             {views.map((v, i) => (
                 <span key={i} className="truncate max-w-[150px]">
